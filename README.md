@@ -2,6 +2,8 @@
 
 A simple, production-minded REST API that classifies text sentiment with Hugging Face Transformers and the pretrained [`distilbert-base-uncased-finetuned-sst-2-english`](https://huggingface.co/distilbert/distilbert-base-uncased-finetuned-sst-2-english) model.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Haarshitt/Sentiment-Analysis)
+
 ## Features
 
 - `POST /predict` classifies one text string.
@@ -110,6 +112,16 @@ docker run --rm -p 8000:8000 sentiment-analysis-api
 ```
 
 The first container start downloads the pretrained model unless the image is extended to pre-cache it.
+
+## Deploy on Render
+
+Click the **Deploy to Render** button near the top of this README, sign in to
+Render, review the Blueprint, and approve the deployment. Render reads
+`render.yaml` from this repository and configures the build command, start
+command, Python version, and health check automatically.
+
+After the deployment finishes, append `/docs` to the generated
+`https://<service-name>.onrender.com` URL to open the live Swagger UI.
 
 ## Architecture
 
