@@ -1,9 +1,11 @@
 """API tests using a fake inference service; no model download is required."""
 
+import numpy as np
 from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.schemas import SentimentPrediction
+from app.services import SentimentService, postprocess_logits, stable_softmax
 
 
 class FakeSentimentService:
@@ -106,3 +108,70 @@ def test_openapi_includes_endpoint_summaries_and_schemas() -> None:
 
     assert schema["paths"]["/predict"]["post"]["summary"] == "Predict sentiment for one text"
     assert "SentimentPrediction" in schema["components"]["schemas"]
+
+
+def test_stable_softmax_handles_large_logits() -> None:
+    probabilities = stable_softmax(np.array([[10_000.0, 10_001.0]]))
+
+    assert np.isfinite(probabilities).all()
+    assert np.isclose(probabilities.sum(), 1.0)
+    assert probabilities[0, 1] > probabilities[0, 0]
+
+
+def test_postprocess_logits_maps_class_ids_and_preserves_order() -> None:
+    predictions = postprocess_logits(
+        np.array(
+            [
+                [8.0, -8.0],
+                [-4.0, 4.0],
+                [0.0, 1.0],
+            ]
+        )
+    )
+
+    assert [prediction.label for prediction in predictions] == [
+        "negative",
+        "positive",
+        "positive",
+    ]
+    assert all(0.0 <= prediction.confidence <= 1.0 for prediction in predictions)
+
+
+def test_service_runs_onnx_with_tokenizer_numpy_inputs() -> None:
+    class ModelInput:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+    class FakeTokenizer:
+        def __call__(self, texts: list[str], **_: object) -> dict[str, np.ndarray]:
+            assert texts == ["good", "bad"]
+            return {
+                "input_ids": np.array([[101, 1], [101, 2]], dtype=np.int32),
+                "attention_mask": np.array([[1, 1], [1, 1]], dtype=np.int32),
+            }
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.received_inputs: dict[str, np.ndarray] | None = None
+
+        def get_inputs(self) -> list[ModelInput]:
+            return [ModelInput("input_ids"), ModelInput("attention_mask")]
+
+        def run(
+            self, _: None, inputs: dict[str, np.ndarray]
+        ) -> list[np.ndarray]:
+            self.received_inputs = inputs
+            return [np.array([[-3.0, 3.0], [3.0, -3.0]])]
+
+    service = SentimentService()
+    fake_session = FakeSession()
+    service._tokenizer = FakeTokenizer()
+    service._session = fake_session
+
+    predictions = service.predict_batch(["good", "bad"])
+
+    assert [prediction.label for prediction in predictions] == ["positive", "negative"]
+    assert fake_session.received_inputs is not None
+    assert all(
+        value.dtype == np.int64 for value in fake_session.received_inputs.values()
+    )
