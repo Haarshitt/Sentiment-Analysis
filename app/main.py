@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Protocol
 
 from fastapi import FastAPI, Request, status
+from fastapi.responses import RedirectResponse
 
 from app.schemas import (
     BatchPredictionResponse,
@@ -53,6 +54,11 @@ def create_app(service: SentimentInference | None = None) -> FastAPI:
 
     def get_service(request: Request) -> SentimentInference:
         return request.app.state.model_service
+
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+    def root() -> RedirectResponse:
+        """Send visitors directly to the interactive Swagger documentation."""
+        return RedirectResponse(url="/docs", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
     @app.get(
         "/health",

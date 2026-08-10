@@ -49,6 +49,7 @@ uvicorn app.main:app --reload
 
 On first startup, the tokenizer and Xenova's quantized ONNX model download to the local Hugging Face cache. Then open:
 
+- Base URL: `http://127.0.0.1:8000` (redirects to Swagger UI)
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - OpenAPI schema: `http://127.0.0.1:8000/openapi.json`
 - Health check: `http://127.0.0.1:8000/health`

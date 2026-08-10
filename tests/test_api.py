@@ -54,6 +54,19 @@ def test_health_initializes_service_once() -> None:
     assert fake_service.is_loaded is True
 
 
+def test_root_redirects_to_swagger_docs() -> None:
+    client, _ = build_client()
+
+    with client:
+        response = client.get("/", follow_redirects=False)
+        head_response = client.head("/", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/docs"
+    assert head_response.status_code == 307
+    assert head_response.headers["location"] == "/docs"
+
+
 def test_predict_returns_normalized_prediction() -> None:
     client, fake_service = build_client()
 

@@ -77,7 +77,9 @@ class SentimentService:
             from huggingface_hub import hf_hub_download
             from onnxruntime import InferenceSession, SessionOptions
             from transformers import AutoTokenizer
+            from transformers.utils import logging as transformers_logging
 
+            transformers_logging.set_verbosity_error()
             tokenizer = AutoTokenizer.from_pretrained(ONNX_REPOSITORY)
             model_path = hf_hub_download(
                 repo_id=ONNX_REPOSITORY,
@@ -85,6 +87,7 @@ class SentimentService:
             )
             session_options = SessionOptions()
             session_options.intra_op_num_threads = 1
+            session_options.log_severity_level = 3
             session = InferenceSession(
                 model_path,
                 sess_options=session_options,
