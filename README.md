@@ -2,7 +2,7 @@
 
 A simple, production-minded REST API that classifies text sentiment with Hugging Face Transformers tokenization and a quantized ONNX export of the pretrained [`distilbert-base-uncased-finetuned-sst-2-english`](https://huggingface.co/distilbert/distilbert-base-uncased-finetuned-sst-2-english) model.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Haarshitt/Sentiment-Analysis)
+
 
 ## Features
 
